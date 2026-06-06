@@ -29,6 +29,88 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { paperTitle, paperMetadata, paperSections, documentFullText, papers } from "./data/document";
 
+// Real-world authoritative citations and legal reference link maps
+export const LINKS = {
+  mcewen: "https://pubmed.ncbi.nlm.nih.gov/8488107/",
+  sapolsky: "https://pubmed.ncbi.nlm.nih.gov/8624419/",
+  arnsten: "https://pubmed.ncbi.nlm.nih.gov/9855502/",
+  thayer: "https://pubmed.ncbi.nlm.nih.gov/11104845/",
+  kivimaki: "https://pubmed.ncbi.nlm.nih.gov/22981249/",
+  cacioppo: "https://pubmed.ncbi.nlm.nih.gov/14499092/",
+  epel: "https://www.pnas.org/doi/10.1073/pnas.0407162101",
+  stark: "https://books.google.com/books/about/Coercive_Control.html?id=f_qOAwAAQBAJ",
+  cohen: "https://www.routledge.com/Folk-Devils-and-Moral-Panics/Cohen/p/book/9780415611398",
+  herman: "https://www.basicbooks.com/titles/judith-l-herman/trauma-and-recovery/9780465061716/",
+  jones: "https://supreme.justia.com/cases/federal/us/565/400/",
+  carpenter: "https://supreme.justia.com/cases/federal/us/585/364/",
+  paul_davis: "https://supreme.justia.com/cases/federal/us/424/693/",
+  adickes: "https://supreme.justia.com/cases/federal/us/398/144/",
+  monell: "https://supreme.justia.com/cases/federal/us/436/658/",
+  lamont: "https://supreme.justia.com/cases/federal/us/381/301/",
+  sec1983: "https://www.law.cornell.edu/uscode/text/42/1983",
+  ada: "https://www.ada.gov/law-and-regs/ada/"
+};
+
+interface CiteProps {
+  linkKey: keyof typeof LINKS;
+  children: React.ReactNode;
+  key?: any;
+}
+
+export function Cite({ linkKey, children }: CiteProps) {
+  const url = LINKS[linkKey];
+  if (!url) return <>{children}</>;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-orange-600 hover:text-orange-700 font-semibold underline decoration-dotted transition-colors cursor-pointer inline-flex items-center gap-0.5"
+    >
+      {children}
+    </a>
+  );
+}
+
+// Helper to split raw text by citations and inject links
+export function parseCitations(text: string): React.ReactNode[] {
+  const regex = /(McEwen & Stellar \(1993\)|McEwen & Stellar's \(1993\)|Sapolsky's \(1996\)|Sapolsky \(1996\)|Arnsten \(1998\)|Thayer & Lane's \(2000\)|Thayer & Lane \(2000\)|Kivimaki et al\.'s \(2012\)|Kivimaki et al\. \(2012\)|Cacioppo & Hawkley's \(2003\)|Cacioppo & Hawkley \(2003\)|Epel et al\.'s \(2004\)|Epel et al\. \(2004\)|Herman \(1992\)|Cohen \(1972\)|Stark \(2007\)|Evan Stark's \(2007\)|Lamont v\. Postmaster General \(1965\)|Lamont \(1965\)|United States v\. Jones \(2012\)|Jones \(2012\)|Carpenter v\. United States \(2018\)|Carpenter \(2018\)|Paul v\. Davis \(1976\)|Adickes v\. S\.H\. Kress & Co\. \(1970\)|Adickes \(1970\)|Monell v\. Department of Social Services \(1978\)|Monell \(1978\)|42 U\.S\.C\. § 1983|Americans with Disabilities Act \(1990\))/g;
+
+  const parts = text.split(regex);
+  return parts.map((part, i) => {
+    if (regex.test(part)) {
+      let linkKey: keyof typeof LINKS | null = null;
+      if (part.includes("McEwen")) linkKey = "mcewen";
+      else if (part.includes("Sapolsky")) linkKey = "sapolsky";
+      else if (part.includes("Arnsten")) linkKey = "arnsten";
+      else if (part.includes("Thayer")) linkKey = "thayer";
+      else if (part.includes("Kivimaki")) linkKey = "kivimaki";
+      else if (part.includes("Cacioppo")) linkKey = "cacioppo";
+      else if (part.includes("Epel")) linkKey = "epel";
+      else if (part.includes("Herman")) linkKey = "herman";
+      else if (part.includes("Cohen")) linkKey = "cohen";
+      else if (part.includes("Stark")) linkKey = "stark";
+      else if (part.includes("Lamont")) linkKey = "lamont";
+      else if (part.includes("Jones")) linkKey = "jones";
+      else if (part.includes("Carpenter")) linkKey = "carpenter";
+      else if (part.includes("Paul v. Davis")) linkKey = "paul_davis";
+      else if (part.includes("Adickes")) linkKey = "adickes";
+      else if (part.includes("Monell")) linkKey = "monell";
+      else if (part.includes("1983")) linkKey = "sec1983";
+      else if (part.includes("Disabilities Act")) linkKey = "ada";
+
+      if (linkKey) {
+        return (
+          <Cite key={i} linkKey={linkKey}>
+            {part}
+          </Cite>
+        );
+      }
+    }
+    return part;
+  });
+}
+
 export default function App() {
   const [selectedPaperId, setSelectedPaperId] = useState<string>("physiological-constitutional");
   const selectedPaper = papers.find(p => p.id === selectedPaperId) || papers[0];
@@ -154,7 +236,10 @@ export default function App() {
       short: "Multi-vector community targeting campaigns",
       icon: <ShieldAlert className="w-5 h-5 text-amber-600" />,
       detail: "Coordinated campaigns deploying atmospheric poisoning, citizen weaponization, and platform erasure. Designed to turn the target's physical and digital environment into an inescapable hostile apparatus.",
-      citations: ["Stark (2007) - Coercive Control", "Cohen (1972) - Folk Devils"],
+      citations: [
+        { text: "Stark (2007) - Coercive Control", key: "stark" },
+        { text: "Cohen (1972) - Folk Devils", key: "cohen" }
+      ],
       metrics: ["5 operational stages", "Exclusion from 100% of local infrastructure nodes"]
     },
     {
@@ -163,7 +248,9 @@ export default function App() {
       short: "Constant neurological combat readiness",
       icon: <Layers className="w-5 h-5 text-red-600" />,
       detail: "The nervous system perceives continuous, inescapable threat. Unlike standard acute stress, the Hypothalamic-Pituitary-Adrenal (HPA) axis is locked in permanent gear, pouring cortisol into the bloodstream.",
-      citations: ["McEwen & Stellar (1993) - Allostatic Load model"],
+      citations: [
+        { text: "McEwen & Stellar (1993) - Allostatic Load model", key: "mcewen" }
+      ],
       metrics: ["No baseline return to rest", "Severe wear across endocrine pathways"]
     },
     {
@@ -172,7 +259,10 @@ export default function App() {
       short: "Physical dendritic cell retraction",
       icon: <Brain className="w-5 h-5 text-indigo-600" />,
       detail: "Continuous cortisol elevation acts as a localized neurotoxin, causing dendritic atrophy in the CA3 pyramidal neurons of the hippocampus. This explicitly destroys the subject's capacity to organize chronological narratives of their own victimization.",
-      citations: ["Sapolsky (1996) - Glucocorticoid toxicity", "Arnsten (1998) - Prefrontal executive inhibition"],
+      citations: [
+        { text: "Sapolsky (1996) - Glucocorticoid toxicity", key: "sapolsky" },
+        { text: "Arnsten (1998) - Prefrontal executive inhibition", key: "arnsten" }
+      ],
       metrics: ["Atrophy of CA3 dendritic terminals", "Severe drop in sequential working memory"]
     },
     {
@@ -181,7 +271,10 @@ export default function App() {
       short: "Cardiac vagal brake inactivation",
       icon: <Activity className="w-5 h-5 text-rose-600" />,
       detail: "Autonomic system loses Heart Rate Variability (HRV), shifting to permanent sympathetic overdrive. The vagal brake fails, denying cardiac system recovery and creating extreme long-term vascular friction.",
-      citations: ["Thayer & Lane (2000) - Neurovisceral integration", "Kivimaki et al. (2012) - Lancet Heart Study"],
+      citations: [
+        { text: "Thayer & Lane (2000) - Neurovisceral integration", key: "thayer" },
+        { text: "Kivimaki et al. (2012) - Lancet Heart Study", key: "kivimaki" }
+      ],
       metrics: ["Sustained drop in HRV baseline", "Coronary heart disease risk matching active smoking"]
     },
     {
@@ -190,7 +283,9 @@ export default function App() {
       short: "Immunological injury signaling cascade",
       icon: <Heart className="w-5 h-5 text-orange-600" />,
       detail: "The brain processes persistent social exclusion and isolation as a severe physical tissue wound. This triggers chronic upregulation of pro-inflammatory cytokines, causing neurochemical blocks and 'sickness behavior.'",
-      citations: ["Cacioppo & Hawkley (2003) - Psychoneuroimmunology of isolation"],
+      citations: [
+        { text: "Cacioppo & Hawkley (2003) - Psychoneuroimmunology of isolation", key: "cacioppo" }
+      ],
       metrics: ["Upregulation of IL-6 and TNF-α cytokines", "Direct blockade of standard dopamine & serotonin synthesis"]
     },
     {
@@ -199,7 +294,9 @@ export default function App() {
       short: "Irreversible bases destruction at chromosome caps",
       icon: <Hourglass className="w-5 h-5 text-emerald-600" />,
       detail: "Accelerated attrition of nucleotide caps (telomeres) that regulate cell division. Suppressed telomerase enzymes and systemic oxidative damage result in rapid cellular aging visible at the base-pair level.",
-      citations: ["Epel et al. (2004) - Stress-induced telomere caps attrition"],
+      citations: [
+        { text: "Epel et al. (2004) - Stress-induced telomere caps attrition", key: "epel" }
+      ],
       metrics: ["Equivalent to +10 years of biological aging", "Drastic reduction in healthy lifecycle envelope"]
     }
   ];
@@ -454,7 +551,7 @@ export default function App() {
                     <div className="space-y-2">
                       <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#1a1a1a] tracking-tight">The 5 Spheres of Physiological Harm</h3>
                       <p className="text-xs leading-relaxed text-black/80 font-sans">
-                        Sustained Directed Social Aggression triggers a profound neurobiological cascade. The HPA Axis gets locked in hyper-activation, elevating cortisol. This creates structural brain changes, decreases heart rate variability, spikes immunological inflammatory biomarkers (IL-6, TNF-α), and accelerates base-pair telomere degradation.
+                        Sustained Directed Social Aggression triggers a profound neurobiological cascade. The <Cite linkKey="mcewen">HPA Axis</Cite> gets locked in hyper-activation, elevating <Cite linkKey="sapolsky">cortisol</Cite>. This creates structural brain changes, decreases <Cite linkKey="thayer">heart rate variability</Cite>, spikes immunological inflammatory biomarkers (<Cite linkKey="cacioppo">IL-6, TNF-α</Cite>), and accelerates base-pair <Cite linkKey="epel">telomere degradation</Cite>.
                       </p>
                     </div>
                     
@@ -500,26 +597,34 @@ export default function App() {
                     <div className="space-y-2">
                       <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#1a1a1a] tracking-tight">Constitutional Actions</h3>
                       <p className="text-xs leading-relaxed text-black/80 font-sans">
-                        Exclusion from communal life is mapped to actionable constitutional injuries. Aggressive litigation under <strong>42 U.S.C. § 1983</strong> targets the <strong>Tip-Badge Loop</strong> as joint private-public state actions.
+                        Exclusion from communal life is mapped to actionable constitutional injuries. Aggressive litigation under <Cite linkKey="sec1983"><strong>42 U.S.C. § 1983</strong></Cite> targets the <strong>Tip-Badge Loop</strong> as <Cite linkKey="adickes">joint private-public state actions</Cite>.
                       </p>
                     </div>
 
                     <div className="space-y-1.5 pt-2 border-t border-dashed border-[#1a1a1a]/25 text-xs font-mono text-[#1a1a1a]/90">
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-orange-600" />
-                        <span className="text-[10px] font-bold">1st Am: Prior Restraints</span>
+                        <Cite linkKey="lamont">
+                          <span className="text-[10px] font-bold hover:text-orange-600 transition-colors cursor-pointer">1st Am: Prior Restraints</span>
+                        </Cite>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-orange-600" />
-                        <span className="text-[10px] font-bold">4th Am: Mosaic Surveillance</span>
+                        <Cite linkKey="carpenter">
+                          <span className="text-[10px] font-bold hover:text-orange-600 transition-colors cursor-pointer">4th Am: Mosaic Surveillance</span>
+                        </Cite>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-orange-600" />
-                        <span className="text-[10px] font-bold">14th Am: Liberty Deprivations</span>
+                        <Cite linkKey="paul_davis">
+                          <span className="text-[10px] font-bold hover:text-orange-600 transition-colors cursor-pointer">14th Am: Liberty Deprivations</span>
+                        </Cite>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-orange-600" />
-                        <span className="text-[10px] font-bold">ADA: System Accommodations</span>
+                        <Cite linkKey="ada">
+                          <span className="text-[10px] font-bold hover:text-orange-600 transition-colors cursor-pointer">ADA: System Accommodations</span>
+                        </Cite>
                       </div>
                     </div>
                   </div>
@@ -563,7 +668,7 @@ export default function App() {
 
                 <div className="prose max-w-none text-black/85 text-sm leading-relaxed" id="paper-overview-sections">
                   <p className="font-serif italic font-medium text-black/80 text-base border-l-4 border-orange-600 pl-4 py-1.5 mb-6 bg-[#f1efe9]/30">
-                    "{selectedPaper.metadata.abstract}"
+                    "{parseCitations(selectedPaper.metadata.abstract)}"
                   </p>
 
                   <div className="space-y-4">
@@ -604,8 +709,8 @@ export default function App() {
                               >
                                 <div className="p-4 sm:p-6 space-y-6">
                                   {/* Section core text */}
-                                  <div className="text-xs sm:text-sm text-black/80 leading-relaxed font-sans space-y-3 whitespace-pre-line">
-                                    {section.content}
+                                  <div className="text-xs sm:text-sm text-black/80 leading-relaxed font-sans space-y-3 whitespace-pre-line font-serif">
+                                    {parseCitations(section.content)}
                                   </div>
 
                                   {/* Dynamic Metric Grid for Visual Fast Reading */}
@@ -629,7 +734,9 @@ export default function App() {
                                     </div>
                                     <div className="flex flex-wrap gap-1.5 font-bold text-black/75">
                                       {section.citations.map((cit, idx) => (
-                                        <span key={idx} className="bg-white border border-[#1a1a1a]/15 px-2 py-0.5 text-[9px]">{cit}</span>
+                                        <span key={idx} className="bg-white border border-[#1a1a1a]/15 px-2 py-0.5 text-[9px] hover:text-orange-600 transition-colors">
+                                          {parseCitations(cit)}
+                                        </span>
                                       ))}
                                     </div>
                                   </div>
@@ -775,9 +882,11 @@ export default function App() {
                                   <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-[#1a1a1a]/55 block">Key Peer-Reviewed Document Cross-References</span>
                                   <div className="flex flex-wrap gap-1.5">
                                     {node.citations.map((cit, idx) => (
-                                      <span key={idx} className="bg-[#f1efe9] border border-black/15 font-mono text-[8px] font-bold px-1.5 py-0.5">
-                                        📚 {cit}
-                                      </span>
+                                      <Cite key={idx} linkKey={cit.key as any}>
+                                        <span className="bg-[#f1efe9] hover:bg-[#e2e2da] text-black border border-black/15 font-mono text-[8px] font-bold px-1.5 py-0.5 transition-colors cursor-pointer block">
+                                          📚 {cit.text}
+                                        </span>
+                                      </Cite>
                                     ))}
                                   </div>
                                 </div>
@@ -845,9 +954,11 @@ export default function App() {
                             <h4 className="text-[10px] uppercase tracking-widest text-[#1a1a1a]/55 font-mono font-bold">Key Peer-Reviewed Document Cross-References</h4>
                             <div className="flex flex-wrap gap-2">
                               {activeNode.citations.map((cit, idx) => (
-                                <span key={idx} className="bg-[#f1efe9] hover:bg-[#e2e2da] text-black border border-black/15 font-mono text-[9px] font-bold px-2 py-1 transition-colors">
-                                  📚 {cit}
-                                </span>
+                                <Cite key={idx} linkKey={cit.key as any}>
+                                  <span className="bg-[#f1efe9] hover:bg-[#e2e2da] text-black border border-black/15 font-mono text-[9px] font-bold px-2 py-1 transition-colors cursor-pointer block">
+                                    📚 {cit.text}
+                                  </span>
+                                </Cite>
                               ))}
                             </div>
                           </div>
@@ -965,7 +1076,7 @@ export default function App() {
                                       <h5 className="font-serif font-extrabold text-sm text-black">Fourteenth Amendment: Stigma-Plus & Joint State Action</h5>
                                     </div>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
-                                      Under <strong>Paul v. Davis (1976)</strong>, damage to reputation alone is not constitutionally protected. However, if the reputational damage is combined with a tangible loss of access or liberty, a cognizable <strong>liberty interest</strong> is immediately triggered under the Stigma-Plus doctrine.
+                                      Under <Cite linkKey="paul_davis"><strong>Paul v. Davis (1976)</strong></Cite>, damage to reputation alone is not constitutionally protected. However, if the reputational damage is combined with a tangible loss of access or liberty, a cognizable <Cite linkKey="paul_davis"><strong>liberty interest</strong></Cite> is immediately triggered under the Stigma-Plus doctrine.
                                     </p>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
                                       DSA campaigns satisfy this criteria via community-distributed blockade. The exhumed historical record is weaponized to systematically coerce restaurants, coffee shops (the target's living room), and libraries (the target's office) to expel the target.
@@ -973,7 +1084,7 @@ export default function App() {
                                     <div className="bg-[#f1efe9]/70 p-3 border border-[#1a1a1a]/15 text-[11px] space-y-1">
                                       <span className="font-mono uppercase font-bold text-orange-600 block">The Joint State Action Lever: Adickes v. S.H. Kress</span>
                                       <p className="text-black/75 leading-relaxed font-sans">
-                                        Under the <strong>Adickes (1970) joint action doctrine</strong>, private citizens can be held liable under <strong>42 U.S.C. § 1983</strong> if they operate as 'willful participants in joint activity' with state officials. When private campaign actors file manufactured dispatch complaints and law enforcement responds repeatedly without investigating, joint-action threshold is reached.
+                                        Under the <Cite linkKey="adickes"><strong>Adickes (1970) joint action doctrine</strong></Cite>, private citizens can be held liable under <Cite linkKey="sec1983"><strong>42 U.S.C. § 1983</strong></Cite> if they operate as 'willful participants in joint activity' with state officials. When private campaign actors file manufactured dispatch complaints and law enforcement responds repeatedly without investigating, joint-action threshold is reached.
                                       </p>
                                     </div>
                                   </div>
@@ -989,7 +1100,7 @@ export default function App() {
                                       The absolute core of First Amendment safety lies in the protection of counter-narrative capabilities. The target must have the functional infrastructure to document and publish truth. 
                                     </p>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
-                                      In Stage Five of DSA, the threat is <strong>digital erasure</strong>. By routing thousands of automated or coordinated false reports to hosting algorithms, the target's publications get blocked. Under the <strong>chilling effect doctrine (Lamont, 1965)</strong>, official or quasi-official actions that reduce the practical ability to speak violate speech guarantees as prior-restraint.
+                                      In Stage Five of DSA, the threat is <strong>digital erasure</strong>. By routing thousands of automated or coordinated false reports to hosting algorithms, the target's publications get blocked. Under the <Cite linkKey="lamont"><strong>chilling effect doctrine (Lamont, 1965)</strong></Cite>, official or quasi-official actions that reduce the practical ability to speak violate speech guarantees as prior-restraint.
                                     </p>
                                     <div className="grid grid-cols-1 gap-2.5">
                                       <div className="bg-[#f1efe9]/55 p-3.5 border border-black/15 text-[11px]">
@@ -1011,7 +1122,7 @@ export default function App() {
                                       <h5 className="font-serif font-extrabold text-sm text-black">Fourth Amendment: Mosaic Peer Surveillance Systems</h5>
                                     </div>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
-                                      The Fourth Amendment protects against warrantless spatial telemetry tracking of citizens. <strong>United States v. Jones (2012)</strong> and <strong>Carpenter v. United States (2018)</strong> established the <strong>Mosaic Theory of Surveillance</strong>.
+                                      The Fourth Amendment protects against warrantless spatial telemetry tracking of citizens. <Cite linkKey="jones"><strong>United States v. Jones (2012)</strong></Cite> and <Cite linkKey="carpenter"><strong>Carpenter v. United States (2018)</strong></Cite> established the <Cite linkKey="carpenter"><strong>Mosaic Theory of Surveillance</strong></Cite>.
                                     </p>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
                                       A coordinated campaign where local civilian lookouts (recruited baristas, landlords, managers) input entries and exits, compile timestamp logs, and coordinate via real-time alerts constitutes an unconstitutional warrantless surveillance apparatus. Bypassing Fourth Amendment warrant obligations using crowd-sourced civilian conduits violates privacy protections.
@@ -1029,10 +1140,10 @@ export default function App() {
                                       The ADA contains two distinct avenues of application to Directed Social Aggression: the <strong>'Regarded As'</strong> prong and the <strong>'Actual Disability'</strong> category.
                                     </p>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
-                                      <strong>'Regarded As' Protection:</strong> By continually framing the subject's actions as evidence of acute mental instabilty, the campaign network regard the subject as disabled, triggering immediate ADA antidiscrimination constraints.
+                                      <strong>'Regarded As' Protection:</strong> By continually framing the subject's actions as evidence of acute mental instabilty, the campaign network regard the subject as disabled, triggering immediate <Cite linkKey="ada">ADA antidiscrimination constraints</Cite>.
                                     </p>
                                     <p className="text-xs font-serif leading-relaxed text-black/85">
-                                      <strong>Actual Biological Disability:</strong> Cortisol-induced hippocampal CA3 atrophy and prefrontal executive inhibition represent clinically verifiable, mechanical cognitive impairments. Under <strong>Title II of the ADA</strong>, public state actors (including responding police officers) have a legal obligation to adjust standard protocols to accommodate this neurobiological fatigue rather than using standard arrest/eviction shortcuts.
+                                      <strong>Actual Biological Disability:</strong> Cortisol-induced hippocampal CA3 atrophy and prefrontal executive inhibition represent clinically verifiable, mechanical cognitive impairments. Under <Cite linkKey="ada"><strong>Title II of the ADA</strong></Cite>, public state actors (including responding police officers) have a legal obligation to adjust standard protocols to accommodate this neurobiological fatigue rather than using standard arrest/eviction shortcuts.
                                     </p>
                                   </div>
                                 )}
@@ -1062,7 +1173,7 @@ export default function App() {
                           <h4 className="font-serif font-extrabold text-[#1a1a1a] text-lg sm:text-xl">Fourteenth Amendment: Stigma-Plus & Joint State Action</h4>
                         </div>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
-                          Under <strong>Paul v. Davis (1976)</strong>, damage to reputation alone is not constitutionally protected. However, if the reputational damage is combined with a tangible loss of access or liberty, a cognizable <strong>liberty interest</strong> is immediately triggered under the Stigma-Plus doctrine.
+                          Under <Cite linkKey="paul_davis"><strong>Paul v. Davis (1976)</strong></Cite>, damage to reputation alone is not constitutionally protected. However, if the reputational damage is combined with a tangible loss of access or liberty, a cognizable <Cite linkKey="paul_davis"><strong>liberty interest</strong></Cite> is immediately triggered under the Stigma-Plus doctrine.
                         </p>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
                           DSA campaigns satisfy this criteria via community-distributed blockade. The exhumed historical record is weaponized to systematically coerce restaurants, coffee shops (the target's living room), and libraries (the target's office) to expel the target.
@@ -1070,7 +1181,7 @@ export default function App() {
                         <div className="bg-[#f1efe9]/70 p-4 border border-[#1a1a1a]/15 space-y-2">
                           <span className="text-[10px] font-mono uppercase tracking-wider font-extrabold text-orange-600 block">The Joint State Action Lever: Adickes v. S.H. Kress</span>
                           <p className="text-xs text-black/75 leading-relaxed font-sans">
-                            Under the <strong>Adickes (1970) joint action doctrine</strong>, private citizens can be held liable under <strong>42 U.S.C. § 1983</strong> if they operate as 'willful participants in joint activity' with state officials. When private campaign actors file manufactured dispatch complaints and law enforcement responds repeatedly without investigating the systematic instigation, the joint-action threshold is reached through Tacit Understanding.
+                            Under the <Cite linkKey="adickes"><strong>Adickes (1970) joint action doctrine</strong></Cite>, private citizens can be held liable under <Cite linkKey="sec1983"><strong>42 U.S.C. § 1983</strong></Cite> if they operate as 'willful participants in joint activity' with state officials. When private campaign actors file manufactured dispatch complaints and law enforcement responds repeatedly without investigating the systematic instigation, the joint-action threshold is reached through Tacit Understanding.
                           </p>
                         </div>
                       </motion.div>
@@ -1093,7 +1204,7 @@ export default function App() {
                           The absolute core of First Amendment safety lies in the protection of counter-narrative capabilities. The target must have the functional infrastructure to document and publish truth. 
                         </p>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
-                          In Stage Five of DSA, the threat is <strong>digital erasure</strong>. By routing thousands of automated or coordinated false reports to hosting algorithms, the target's publications get blocked. Under the <strong>chilling effect doctrine (Lamont, 1965)</strong>, official or quasi-official actions that reduce the practical ability to speak violate speech guarantees as prior-restraint.
+                          In Stage Five of DSA, the threat is <strong>digital erasure</strong>. By routing thousands of automated or coordinated false reports to hosting algorithms, the target's publications get blocked. Under the <Cite linkKey="lamont"><strong>chilling effect doctrine (Lamont, 1965)</strong></Cite>, official or quasi-official actions that reduce the practical ability to speak violate speech guarantees as prior-restraint.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#1a1a1a]/10">
                           <div className="bg-[#f1efe9]/55 p-3.5 border border-[#1a1a1a]/15">
@@ -1122,7 +1233,7 @@ export default function App() {
                           <h4 className="font-serif font-extrabold text-[#1a1a1a] text-lg sm:text-xl">Fourth Amendment: Mosaic Peer Surveillance Systems</h4>
                         </div>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
-                          The Fourth Amendment protects against warrantless spatial telemetry tracking of citizens. <strong>United States v. Jones (2012)</strong> and <strong>Carpenter v. United States (2018)</strong> established the <strong>Mosaic Theory of Surveillance</strong>.
+                          The Fourth Amendment protects against warrantless spatial telemetry tracking of citizens. <Cite linkKey="jones"><strong>United States v. Jones (2012)</strong></Cite> and <Cite linkKey="carpenter"><strong>Carpenter v. United States (2018)</strong></Cite> established the <Cite linkKey="carpenter"><strong>Mosaic Theory of Surveillance</strong></Cite>.
                         </p>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
                           Under Mosaic Theory, the government cannot claim that because individual visual locations of a vehicle are on 'public streets' (and hence contain zero expectation of privacy in isolation), compilation is allowed. Tracking the aggregate movement web of a target yields a qualitative, structured intrusion requiring a warrant.
@@ -1153,10 +1264,10 @@ export default function App() {
                           The ADA contains two distinct avenues of application to Directed Social Aggression: the <strong>'Regarded As'</strong> prong and the <strong>'Actual Disability'</strong> category.
                         </p>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
-                          <strong>'Regarded As' Protection:</strong> By continually framing the subject's actions as evidence of acute mental instabilty, the campaign network regard the subject as disabled, triggerring immediate ADA antidiscrimination constraints.
+                          <strong>'Regarded As' Protection:</strong> By continually framing the subject's actions as evidence of acute mental instabilty, the campaign network regard the subject as disabled, triggering immediate <Cite linkKey="ada">ADA antidiscrimination constraints</Cite>.
                         </p>
                         <p className="text-sm font-serif text-black/85 leading-relaxed">
-                          <strong>Actual Biological Disability:</strong> Cortisol-induced hippocampal CA3 atrophy and prefrontal executive inhibition represent clinically verifiable, mechanical cognitive impairments. Under <strong>Title II of the ADA</strong>, public state actors (including responding police officers) have a legal obligation to adjust standard protocols to accommodate this neurobiological fatigue rather than using standard arrest/eviction shortcuts.
+                          <strong>Actual Biological Disability:</strong> Cortisol-induced hippocampal CA3 atrophy and prefrontal executive inhibition represent clinically verifiable, mechanical cognitive impairments. Under <Cite linkKey="ada"><strong>Title II of the ADA</strong></Cite>, public state actors (including responding police officers) have a legal obligation to adjust standard protocols to accommodate this neurobiological fatigue rather than using standard arrest/eviction shortcuts.
                         </p>
                       </motion.div>
                     )}
@@ -1308,16 +1419,16 @@ export default function App() {
                       <div id="doc-anchor-neuro" className="space-y-4 pt-4 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">1.1 The Neurobiological Signature of Sustained Hypervigilance</h3>
                         <p>
-                          The physiological damage pathway in DSA begins with the nervous system's response to what the clinical literature identifies as inescapable, unpredictable threat. Unlike acute stressors — which activate and then resolve the threat-response architecture — chronic, distributed social aggression forces the target into a state of perpetual hypervigilance that bypasses normal habituation mechanisms.
+                          {parseCitations("The physiological damage pathway in DSA begins with the nervous system's response to what the clinical literature identifies as inescapable, unpredictable threat. Unlike acute stressors — which activate and then resolve the threat-response architecture — chronic, distributed social aggression forces the target into a state of perpetual hypervigilance that bypasses normal habituation mechanisms.")}
                         </p>
                         <p>
-                          The primary neurobiological consequence is sustained activation of the Hypothalamic-Pituitary-Adrenal (HPA) axis. Under normal threat conditions, HPA activation produces cortisol release that mobilizes the organism for response, then resolves when the threat passes. Under DSA conditions, the threat does not pass. The HPA axis remains activated, and chronic cortisol elevation produces a cascade of neurobiological damage with well-documented structural consequences.
+                          {parseCitations("The primary neurobiological consequence is sustained activation of the Hypothalamic-Pituitary-Adrenal (HPA) axis. Under normal threat conditions, HPA activation produces cortisol release that mobilizes the organism for response, then resolves when the threat passes. Under DSA conditions, the threat does not pass. The HPA axis remains activated, and chronic cortisol elevation produces a cascade of neurobiological damage with well-documented structural consequences.")}
                         </p>
                         <p>
-                          McEwen and Stellar's (1993) foundational research on allostatic load established the mechanism through which chronic HPA activation produces cumulative physiological cost. Repeated activation without recovery produces wear and tear across multiple regulatory systems — what McEwen termed the 'price of adaptation.' At the structural neurological level, chronic cortisol elevation produces measurable damage to the hippocampus — the brain region most critical for memory consolidation, contextual sequencing, and the integration of disparate experiential data into coherent narrative.
+                          {parseCitations("McEwen and Stellar's (1993) foundational research on allostatic load established the mechanism through which chronic HPA activation produces cumulative physiological cost. Repeated activation without recovery produces wear and tear across multiple regulatory systems — what McEwen termed the 'price of adaptation.' At the structural neurological level, chronic cortisol elevation produces measurable damage to the hippocampus — the brain region most critical for memory consolidation, contextual sequencing, and the integration of disparate experiential data into coherent narrative.")}
                         </p>
                         <p>
-                          Sapolsky's (1996) research demonstrated that sustained glucocorticoid exposure causes dendritic atrophy in hippocampal CA3 pyramidal neurons, reducing the structural substrate available for memory formation and retrieval. The clinical consequence for DSA targets is specifically relevant: impaired capacity to sequence the events of their own victimization, reduced ability to construct chronological accounts, and diminished working memory available for the complex organizational tasks required to build the documentation systems that constitute their defense.
+                          {parseCitations("Sapolsky's (1996) research demonstrated that sustained glucocorticoid exposure causes dendritic atrophy in hippocampal CA3 pyramidal neurons, reducing the structural substrate available for memory formation and retrieval. The clinical consequence for DSA targets is specifically relevant: impaired capacity to sequence the events of their own victimization, reduced ability to construct chronological accounts, and diminished working memory available for the complex organizational tasks required to build the documentation systems that constitute their defense.")}
                         </p>
                       </div>
 
@@ -1325,10 +1436,10 @@ export default function App() {
                       <div id="doc-anchor-cardio" className="space-y-4 pt-6 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">1.2 Cardiovascular Consequences: The Somatic Record of Sustained Threat</h3>
                         <p>
-                          The cardiovascular system provides perhaps the most precisely measurable somatic record of sustained psychological stress. Heart Rate Variability (HRV) serves as a direct physiological index of autonomic nervous system balance and, by extension, of the organism's capacity for flexible adaptive response. High HRV indicates a nervous system capable of shifting fluidly between activation and recovery. Low HRV indicates sympathetic dominance — a system locked in threat-response mode.
+                          {parseCitations("The cardiovascular system provides perhaps the most precisely measurable somatic record of sustained psychological stress. Heart Rate Variability (HRV) serves as a direct physiological index of autonomic nervous system balance and, by extension, of the organism's capacity for flexible adaptive response. High HRV indicates a nervous system capable of shifting fluidly between activation and recovery. Low HRV indicates sympathetic dominance — a system locked in threat-response mode.")}
                         </p>
                         <p>
-                          Sustained psychosocial stress produces sustained HRV reduction, with the magnitude of reduction correlating with both the intensity and duration of the stressor. Kivimaki et al.'s (2012) landmark meta-analysis of work stress and cardiovascular disease — encompassing 197,473 participants across thirteen European cohort studies — established that chronic psychosocial stress confers a statistically significant increase in coronary heart disease incidence independent of traditional cardiovascular risk factors. The effect size was comparable to active smoking.
+                          {parseCitations("Sustained psychosocial stress produces sustained HRV reduction, with the magnitude of reduction correlating with both the intensity and duration of the stressor. Kivimaki et al.'s (2012) landmark meta-analysis of work stress and cardiovascular disease — encompassing 197,473 participants across thirteen European cohort studies — established that chronic psychosocial stress confers a statistically significant increase in coronary heart disease incidence independent of traditional cardiovascular risk factors. The effect size was comparable to active smoking.")}
                         </p>
                       </div>
 
@@ -1336,10 +1447,10 @@ export default function App() {
                       <div id="doc-anchor-immuno" className="space-y-4 pt-6 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">1.3 Immunological Suppression: The Inflammatory Signature of Social Exclusion</h3>
                         <p>
-                          The immunological consequences of sustained social stress represent one of the most extensively documented physiological pathways in contemporary psychoneuroimmunology. Chronic HPA activation produces glucocorticoid-mediated immunosuppression through multiple mechanisms, including the downregulation of natural killer cell activity, the reduction of lymphocyte proliferation, and the dysregulation of cytokine signaling that coordinates inflammatory response.
+                          {parseCitations("The immunological consequences of sustained social stress represent one of the most extensively documented physiological pathways in contemporary psychoneuroimmunology. Chronic HPA activation produces glucocorticoid-mediated immunosuppression through multiple mechanisms, including the downregulation of natural killer cell activity, the reduction of lymphocyte proliferation, and the dysregulation of cytokine signaling that coordinates inflammatory response.")}
                         </p>
                         <p>
-                          Cacioppo and Hawkley's (2003) research on social isolation and health established a particularly relevant specific pathway: loneliness and perceived social disconnection produces measurable upregulation of inflammatory cytokines, including Interleukin-6 (IL-6) and Tumor Genesis Factor-alpha (TNF-alpha). The body treats social exclusion as a form of injury, mounting an inflammatory response to a wound that has no physical location. Both cytokines cross the blood-brain barrier and directly affect neurotransmitter metabolism, contributing to what the clinical literature recognizes as sickness behavior.
+                          {parseCitations("Cacioppo and Hawkley's (2003) research on social isolation and health established a particularly relevant specific pathway: loneliness and perceived social disconnection produces measurable upregulation of inflammatory cytokines, including Interleukin-6 (IL-6) and Tumor Genesis Factor-alpha (TNF-alpha). The body treats social exclusion as a form of injury, mounting an inflammatory response to a wound that has no physical location. Both cytokines cross the blood-brain barrier and directly affect neurotransmitter metabolism, contributing to what the clinical literature recognizes as sickness behavior.")}
                         </p>
                       </div>
 
@@ -1347,13 +1458,13 @@ export default function App() {
                       <div id="doc-anchor-cellular" className="space-y-4 pt-6 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">1.4 Telomere Attrition: The Cellular Ledger of Accelerated Aging</h3>
                         <p>
-                          The most striking evidence of DSA's physiological impact appears at the cellular level, in the structure of telomeres — the protective nucleotide sequences that cap chromosomal ends and serve as a biological aging clock. Telomere length shortens with each cell division; critically, it also shortens in response to oxidative stress and chronic psychological stress through stress-induced oxidative damage to telomeric DNA. The enzyme telomerase, which maintains telomere length, is suppressed by chronic cortisol elevation.
+                          {parseCitations("The most striking evidence of DSA's physiological impact appears at the cellular level, in the structure of telomeres — the protective nucleotide sequences that cap chromosomal ends and serve as a biological aging clock. Telomere length shortens with each cell division; critically, it also shortens in response to oxidative stress and chronic psychological stress through stress-induced oxidative damage to telomeric DNA. The enzyme telomerase, which maintains telomere length, is suppressed by chronic cortisol elevation.")}
                         </p>
                         <p>
-                          Epel et al.'s (2004) landmark study in the Proceedings of the National Academy of Sciences established the direct link between perceived psychological stress and accelerated telomere attrition in a human sample. Women experiencing chronic caregiving stress showed significantly shorter telomeres and lower telomerase activity than controls — an effect equivalent to approximately ten additional years of cellular aging.
+                          {parseCitations("Epel et al.'s (2004) landmark study in the Proceedings of the National Academy of Sciences established the direct link between perceived psychological stress and accelerated telomere attrition in a human sample. Women experiencing chronic caregiving stress showed significantly shorter telomeres and lower telomerase activity than controls — an effect equivalent to approximately ten additional years of cellular aging.")}
                         </p>
                         <p>
-                          In the DSA context, the implications are unambiguous: sustained campaign-induced stress accelerates the biological aging process at the cellular level, shortening the target's healthy lifespan in proportion to the duration and intensity of the campaign. The campaign against the documented subject has a measurable biological cost that will be paid in reduced healthy years of life — a cost as concrete as any physical injury.
+                          {parseCitations("In the DSA context, the implications are unambiguous: sustained campaign-induced stress accelerates the biological aging process at the cellular level, shortening the target's healthy lifespan in proportion to the duration and intensity of the campaign. The campaign against the documented subject has a measurable biological cost that will be paid in reduced healthy years of life — a cost as concrete as any physical injury.")}
                         </p>
                       </div>
 
@@ -1361,10 +1472,10 @@ export default function App() {
                       <div id="doc-anchor-coercive" className="space-y-4 pt-6 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">2.1 - 2.4 Distributed Coercive Control and Infrastructure Attacks</h3>
                         <p>
-                          Evan Stark's (2007) work on coercive control reframed intimate partner violence by identifying control over the infrastructure of daily life rather than physical violence as the core mechanism of harm. Abusers achieve dominance through systematic control of access to food, shelter, finance, and communication.
+                          {parseCitations("Evan Stark's (2007) work on coercive control reframed intimate partner violence by identifying control over the infrastructure of daily life rather than physical violence as the core mechanism of harm. Abusers achieve dominance through systematic control of access to food, shelter, finance, and communication.")}
                         </p>
                         <p>
-                          Community-based DSA shatters this household limit. For an unhoused individual, the survival infrastructure is distributed. Groceries are the refrigerator. Restaurants are the kitchen. Coffee shops are the office. When coordinated DSA networks approach staff at these nodes, introduce their folk devil narratives, and exclude the target from each in sequence, they execute a distributed coercive control operation. The harm is the product of exclusion and the complete elimination of recovery options, creating an inescapable pressure matrix.
+                          {parseCitations("Community-based DSA shatters this household limit. For an unhoused individual, the survival infrastructure is distributed. Groceries are the refrigerator. Restaurants are the kitchen. Coffee shops are the office. When coordinated DSA networks approach staff at these nodes, introduce their folk devil narratives, and exclude the target from each in sequence, they execute a distributed coercive control operation. The harm is the product of exclusion and the complete elimination of recovery options, creating an inescapable pressure matrix.")}
                         </p>
                       </div>
 
@@ -1372,10 +1483,10 @@ export default function App() {
                       <div id="doc-anchor-const-fourteenth" className="space-y-4 pt-6 border-t border-[#1a1a1a]/15">
                         <h3 className="text-lg font-serif font-bold text-black tracking-tight border-b border-black/10 pb-1.5">3.1 - 3.4 Constitutional Liability & State Joint Action (Section 1983)</h3>
                         <p>
-                          First Amendment rights are violated via digital suppression under prior restraint principles (Lamont 1965). Fourth Amendment claims attach under the mosaic theory of surveillance established in <em>Jones (2012)</em> and <em>Carpenter (2018)</em>. Deprivation of core space access satisfies the Fourteenth Amendment stigma-plus standard (Paul v. Davis 1976).
+                          {parseCitations("First Amendment rights are violated via digital suppression under prior restraint principles (Lamont 1965). Fourth Amendment claims attach under the mosaic theory of surveillance established in Jones (2012) and Carpenter (2018). Deprivation of core space access satisfies the Fourteenth Amendment stigma-plus standard (Paul v. Davis 1976).")}
                         </p>
                         <p>
-                          Under the Adickes (1970) joint action test, private harassers participate with municipal responders. Municipal police departments that repeatedly respond to manufactured notifications without auditing bias are liable under Monell (1978) custom doctrine.
+                          {parseCitations("Under the Adickes (1970) joint action test, private harassers participate with municipal responders. Municipal police departments that repeatedly respond to manufactured notifications without auditing bias are liable under Monell (1978) custom doctrine.")}
                         </p>
                       </div>
                     </>
@@ -1387,7 +1498,7 @@ export default function App() {
                           <p className="text-xs uppercase tracking-wider font-mono text-orange-600 font-bold">{sec.tagline}</p>
                           <div className="space-y-4 pt-1">
                             {sec.content.split("\n\n").map((para, i) => (
-                              <p key={i} className="leading-relaxed text-sm text-[#1a1a1a]/95">{para}</p>
+                              <p key={i} className="leading-relaxed text-sm text-[#1a1a1a]/95">{parseCitations(para)}</p>
                             ))}
                           </div>
                         </div>
