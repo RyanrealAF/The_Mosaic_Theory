@@ -10,6 +10,7 @@ import {
   MessageSquare, 
   ChevronDown, 
   ChevronRight, 
+  ChevronLeft,
   Heart, 
   AlertTriangle, 
   Scale, 
@@ -21,7 +22,9 @@ import {
   CheckCircle,
   HelpCircle,
   Send,
-  Loader2
+  Loader2,
+  Menu,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { paperTitle, paperMetadata, paperSections, documentFullText, papers } from "./data/document";
@@ -34,6 +37,7 @@ export default function App() {
   // Mobile responsive helper states
   const [isMobileIndexExpanded, setIsMobileIndexExpanded] = useState(false);
   const [isMobilePromptsExpanded, setIsMobilePromptsExpanded] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   
   // Biological pathway visualizer state
   const [selectedBioNode, setSelectedBioNode] = useState<string>("hpa");
@@ -230,42 +234,120 @@ export default function App() {
             </div>
           </div>
           
-          {/* Main Module Tabs on Mobile are swipeable horizontally; Desktop are standard layout */}
-          <nav className="border-t lg:border-t-0 pt-3 lg:pt-0 border-[#1a1a1a]/10" id="navigation-tabs">
-            <div className="flex flex-row overflow-x-auto whitespace-nowrap scrollbar-none pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 gap-1.5" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          {/* Sidebar Toggle Column inside the main editorial header */}
+          <div className="flex items-center self-start lg:self-end mt-3 lg:mt-0" id="sidebar-toggle-container">
+            <button
+              onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+              className="px-4 py-2.5 text-[10px] uppercase tracking-widest font-mono font-bold transition-all border-2 border-black bg-white text-black hover:bg-orange-600 hover:text-white hover:border-orange-600 shadow-[3px_3px_0px_rgba(26,26,26,1)] flex items-center gap-2 cursor-pointer outline-hidden select-none"
+              id="sidebar-toggle-button"
+            >
+              {isSidebarExpanded ? (
+                <>
+                  <ChevronLeft className="w-4 h-4 text-orange-600 shrink-0" />
+                  <span>Retract Index</span>
+                </>
+              ) : (
+                <>
+                  <Menu className="w-4 h-4 text-orange-600 shrink-0" />
+                  <span>Expand Index</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Editorial Body Wrapper - Side-by-side Sidebar and Main Content */}
+      <div className="flex-1 flex flex-col lg:flex-row relative max-w-7xl w-full mx-auto" id="editorial-body-wrapper">
+        
+        {/* Retractable Editorial Sidebar */}
+        <aside 
+          className={`transition-all duration-300 ease-in-out border-b lg:border-b-0 lg:border-r border-[#1a1a1a]/15 bg-[#fbfaf6] shrink-0 ${
+            isSidebarExpanded 
+              ? "block w-full lg:w-72" 
+              : "hidden lg:block lg:w-16 h-auto lg:h-[calc(100vh-140px)]"
+          }`}
+          id="editorial-sidebar"
+        >
+          {/* Sidebar contents */}
+          <div className={`p-4 sm:p-5 h-full flex flex-col ${isSidebarExpanded ? "space-y-6" : "space-y-4 lg:items-center"}`}>
+            
+            {/* Header of the sidebar */}
+            {isSidebarExpanded ? (
+              <div className="border-b-2 border-black pb-3 select-none">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-orange-600" />
+                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] font-mono text-black/45">TREATISE INDEX</span>
+                </div>
+                <h3 className="text-xs font-serif font-black text-black/90 tracking-tight mt-1">RESEARCH MODULES</h3>
+              </div>
+            ) : (
+              <div className="hidden lg:flex items-center justify-center border-b border-black/15 pb-2.5 w-full">
+                <Layers className="w-5 h-5 text-orange-600" />
+              </div>
+            )}
+
+            {/* Navigation buttons: Vertical stack on desktop; List on mobile */}
+            <nav className={`flex ${isSidebarExpanded ? "flex-col gap-2.5" : "flex-row lg:flex-col gap-2"} w-full`}>
               {[
-                { id: "overview", label: "Executive Summary", icon: <BookOpen className="w-3.5 h-3.5" /> },
-                { id: "pathway", label: "Physiological Cascade", icon: <Activity className="w-3.5 h-3.5" /> },
-                { id: "constitutional", label: "Constitutional Harm", icon: <ShieldAlert className="w-3.5 h-3.5" /> },
-                { id: "document", label: "Full Document", icon: <FileText className="w-3.5 h-3.5" /> },
-                { id: "ama", label: "Ask the Paper", icon: <MessageSquare className="w-3.5 h-3.5" />, special: true }
+                { id: "overview", label: "Executive Summary", icon: <BookOpen className="w-4 h-4" />, desc: "Key analysis & abstracts" },
+                { id: "pathway", label: "Physiological Cascade", icon: <Activity className="w-4 h-4" />, desc: "Upregulated biological indices" },
+                { id: "constitutional", label: "Constitutional Harm", icon: <ShieldAlert className="w-4 h-4" />, desc: "Cognizable liberty interests" },
+                { id: "document", label: "Full Document", icon: <FileText className="w-4 h-4" />, desc: "Litigation blueprint & indices" },
+                { id: "ama", label: "Ask the Paper", icon: <MessageSquare className="w-4 h-4" />, desc: "AI-grounded search assistant", special: true }
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-3 py-2 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold transition-all flex items-center gap-1.5 border cursor-pointer shrink-0 ${
+                    onClick={() => {
+                      setActiveTab(tab.id as any);
+                      // Auto retract sidebar on mobile after choosing a tab
+                      if (window.innerWidth < 1024) {
+                        setIsSidebarExpanded(false);
+                      }
+                    }}
+                    className={`text-left transition-all duration-200 border cursor-pointer select-none shrink-0 ${
+                      isSidebarExpanded 
+                        ? "p-3 w-full flex items-center gap-3" 
+                        : "p-3 flex items-center justify-center lg:w-11 lg:h-11"
+                    } ${
                       isActive 
-                        ? "bg-[#1a1a1a] text-[#f9f8f4] border-[#1a1a1a]" 
+                        ? "bg-[#1a1a1a] text-[#f9f8f4] border-[#1a1a1a] shadow-[2px_2px_0px_#ea580c]" 
                         : tab.special 
                           ? "text-orange-600 border-orange-600/35 hover:bg-orange-600/5 bg-[#f9f8f4]"
-                          : "text-black/70 border-black/15 hover:border-black/50 hover:bg-black/5 bg-[#f9f8f4]"
+                          : "text-black/75 border-black/15 hover:border-black/50 hover:bg-black/5 bg-[#f9f8f4]"
                     }`}
-                    id={`tab-${tab.id}-btn`}
+                    title={tab.label}
+                    id={`sidebar-tab-${tab.id}-btn`}
                   >
-                    {tab.icon}
-                    {tab.label}
+                    <div className="shrink-0">{tab.icon}</div>
+                    {isSidebarExpanded && (
+                      <div className="flex flex-col text-left leading-none truncate">
+                        <span className="font-sans font-black tracking-wider uppercase text-[10px]">{tab.label}</span>
+                        <span className={`text-[8px] mt-1 truncate ${isActive ? "text-[#f9f8f4]/60" : "text-black/45"}`}>{tab.desc}</span>
+                      </div>
+                    )}
                   </button>
                 );
               })}
-            </div>
-          </nav>
-        </div>
-      </header>
+            </nav>
 
-      {/* Main Container Area with Newsprint Canvas */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-5 sm:py-8" id="primary-content-wrapper">
+            {/* Bottom Meta Stats block */}
+            {isSidebarExpanded && (
+              <div className="hidden lg:block pt-5 border-t border-[#1a1a1a]/10 mt-auto text-[8px] font-mono uppercase tracking-[0.18em] text-black/50 leading-relaxed select-none">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse"></span>
+                  <span>CODENAME: PROSTHESIS-V</span>
+                </div>
+                <div className="text-orange-600 font-extrabold mt-1">STATUS: COMPREHENSIVE DOSSIER REVEALED</div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Main content pane */}
+        <main className="flex-1 px-4 sm:px-8 py-5 sm:py-8" id="primary-content-wrapper">
         
         {/* Dynamic banner regarding model configuration */}
         {isFallbackActive && (
@@ -1447,6 +1529,7 @@ export default function App() {
         </AnimatePresence>
 
       </main>
+    </div>
 
       {/* Persistent Academic Footer - Broadsheet Legal Record */}
       <footer className="border-t-2 border-black bg-[#f1efe9]/50 py-8 mt-12 text-xs text-black/60 font-mono" id="primary-footer">
