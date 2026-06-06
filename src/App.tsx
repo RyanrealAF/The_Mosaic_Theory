@@ -112,10 +112,34 @@ export function parseCitations(text: string): React.ReactNode[] {
   });
 }
 
+// Helper to return SVG string markup for each concept (for both browser rendering and favicon injection)
+export function getConceptSvgMarkup(concept: number): string {
+  switch (concept) {
+    case 1:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><line x1="32" y1="12" x2="32" y2="52" stroke="white" stroke-width="3"/><line x1="16" y1="18" x2="48" y2="18" stroke="white" stroke-width="3"/><line x1="16" y1="18" x2="16" y2="34" stroke="white" stroke-width="1.5"/><path d="M10 34 h12" stroke="white" stroke-width="2"/><path d="M34 18 L38 18 L41 6 L44 32 L47 14 L50 18 L58 18" stroke="%23FF4500" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    case 2:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><text x="32" y="44" font-family="'Playfair Display', serif" font-size="38" fill="white" font-weight="900" text-anchor="middle">§</text><rect x="12" y="50" width="40" height="6" fill="%23FF4500"/></svg>`;
+    case 3:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><rect width="16" height="64" fill="%23FF4500"/><text x="40" y="38" font-family="'JetBrains Mono', monospace" font-size="16" fill="white" font-weight="bold" text-anchor="middle">DSA</text></svg>`;
+    case 4:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="%23F4F3EF"/><rect x="4" y="4" width="56" height="56" stroke="black" stroke-width="4" fill="none"/><line x1="4" y1="16" x2="60" y2="16" stroke="black" stroke-width="2"/><line x1="4" y1="48" x2="60" y2="48" stroke="black" stroke-width="2"/><text x="32" y="38" font-family="'JetBrains Mono', monospace" font-size="20" fill="black" font-weight="bold" text-anchor="middle">M•R</text><rect x="22" y="43" width="20" height="3" fill="%23FF4500"/></svg>`;
+    case 5:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><line x1="12" y1="0" x2="12" y2="64" stroke="%23FF4500" stroke-width="1.5"/><line x1="16" y1="0" x2="16" y2="64" stroke="%23FF4500" stroke-width="0.75"/><path d="M24,12 C32,20 44,8 52,16 M24,32 C32,40 44,28 52,36 M24,52 C32,60 44,48 52,56" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="28" cy="14" r="3" fill="white"/><circle cx="48" cy="14" r="3" fill="white"/><circle cx="28" cy="34" r="3" fill="white"/><circle cx="48" cy="34" r="3" fill="white"/><circle cx="28" cy="54" r="3" fill="white"/><circle cx="48" cy="54" r="3" fill="white"/></svg>`;
+    case 6:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><path d="M16 16 L32 30 L48 16" stroke="%23FF4500" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M16 32 L32 46 L48 32" stroke="white" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    default:
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" fill="black"/><text x="32" y="26" font-family="'Playfair Display', serif" font-size="20" fill="white" font-weight="900" text-anchor="middle" letter-spacing="-1">RYAN</text><text x="32" y="44" font-family="'JetBrains Mono', monospace" font-size="13" fill="%23FF4500" font-weight="600" text-anchor="middle" letter-spacing="1">REAL AF</text><line x1="12" y1="52" x2="52" y2="52" stroke="white" stroke-width="2"/></svg>`;
+  }
+}
+
 export default function App() {
   const [selectedPaperId, setSelectedPaperId] = useState<string>("physiological-constitutional");
   const selectedPaper = papers.find(p => p.id === selectedPaperId) || papers[0];
-  const [activeTab, setActiveTab] = useState<"overview" | "pathway" | "constitutional" | "document" | "ama">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "pathway" | "constitutional" | "document" | "ama" | "specs">("overview");
+  
+  // Brand Specs & Favicon Simulator State
+  const [selectedConcept, setSelectedConcept] = useState<number>(7);
+  const [specBrowserTheme, setSpecBrowserTheme] = useState<"light" | "dark">("dark");
   
   // Mobile responsive helper states
   const [isMobileIndexExpanded, setIsMobileIndexExpanded] = useState(false);
@@ -152,6 +176,15 @@ export default function App() {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory, isTyping]);
+
+  // Dynamically synchronize the actual browser favicon with the active selected concept
+  useEffect(() => {
+    const faviconEl = document.getElementById("favicon");
+    if (faviconEl) {
+      const svgStr = getConceptSvgMarkup(selectedConcept);
+      faviconEl.setAttribute("href", `data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}`);
+    }
+  }, [selectedConcept]);
 
   // Toggle sections
   const toggleSection = (id: string) => {
@@ -398,6 +431,7 @@ export default function App() {
                 { id: "pathway", label: "Physiological Cascade", icon: <Activity className="w-4 h-4" />, desc: "Upregulated biological indices" },
                 { id: "constitutional", label: "Constitutional Harm", icon: <ShieldAlert className="w-4 h-4" />, desc: "Cognizable liberty interests" },
                 { id: "document", label: "Full Document", icon: <FileText className="w-4 h-4" />, desc: "Litigation blueprint & indices" },
+                { id: "specs", label: "Visual Specs", icon: <Cpu className="w-4 h-4" />, desc: "Co-brand identity & favicon simulator" },
                 { id: "ama", label: "Ask the Paper", icon: <MessageSquare className="w-4 h-4" />, desc: "AI-grounded search assistant", special: true }
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
@@ -1698,6 +1732,309 @@ export default function App() {
                   </button>
                 </div>
 
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 6: THE VISUAL IDENTITY & FAVICON SPECIMEN SHEET */}
+          {activeTab === "specs" && (
+            <motion.div
+              key="specs-tab"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-8 animate-fadeIn"
+              id="specs-panel"
+            >
+              {/* Masthead Banner for Specimen Sheet */}
+              <div className="bg-white border-2 border-black p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6" id="specs-masthead">
+                <div className="space-y-2 max-w-3xl">
+                  <span className="text-[10px] uppercase tracking-[0.25em] font-extrabold text-orange-600 font-mono">BRAND CO-ALIGNMENT BRIEF</span>
+                  <h2 className="text-xl sm:text-3xl font-serif font-black text-black tracking-tight">Visual Identity Specimen Sheet</h2>
+                  <p className="text-xs text-black/75 font-sans leading-relaxed">
+                    Medico-Legal Public Ledger x <strong>RYAN REAL AF</strong> co-branding. Designed to present systematic biosocial campaign analysis within high-contrast editorial frameworks. Use this spec sheet to evaluate alignment options, typography pairings, and test real-time browser tab renderings.
+                  </p>
+                </div>
+                <div className="bg-[#1a1a1a] text-white p-4 font-mono text-[9px] uppercase tracking-widest leading-relaxed border-2 border-black">
+                  <span>DESIGN SPECIFICATION</span>
+                  <br/>
+                  <span className="text-orange-500 font-bold">VER 1.0.4 • HIGH CONTRAST</span>
+                </div>
+              </div>
+
+              {/* Main Specs Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {/* Left Column: Interactive Favicon Tab Tester */}
+                <div className="lg:col-span-12 xl:col-span-5 space-y-6">
+                  <div className="bg-white border-4 border-black p-5 sm:p-6 brutalist-shadow" id="favicon-tester-card">
+                    <div className="border-b border-[#1a1a1a]/15 pb-3 mb-5">
+                      <span className="text-[9px] font-mono font-bold text-orange-600 uppercase tracking-widest block mb-1">INTERACTIVE PLAYGROUND</span>
+                      <h3 className="text-lg font-serif font-bold text-black tracking-tight flex items-center gap-1.5">
+                        <Layers className="w-5 h-5 text-orange-600" />
+                        Interactive Favicon Tab Tester
+                      </h3>
+                      <p className="text-[11px] text-neutral-500 mt-1">
+                        Select a concept profile on the right, then toggle browser themes to simulate and inspect legibility at standard 16px tab scale.
+                      </p>
+                    </div>
+
+                    {/* Browser Theme Selector Toggles */}
+                    <div className="flex gap-2 mb-4 justify-between items-center bg-[#f1efe9]/40 p-2 border border-black/10">
+                      <span className="font-mono text-[10px] uppercase font-bold text-black/60">Simulated Theme:</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setSpecBrowserTheme("light")}
+                          className={`px-3 py-1 text-[10px] uppercase font-mono font-bold border transition-colors cursor-pointer ${
+                            specBrowserTheme === "light"
+                              ? "bg-white text-black border-black font-extrabold"
+                              : "bg-[#f1efe9] text-black/40 border-transparent hover:text-black/75"
+                          }`}
+                        >
+                          Light Browser
+                        </button>
+                        <button
+                          onClick={() => setSpecBrowserTheme("dark")}
+                          className={`px-3 py-1 text-[10px] uppercase font-mono font-bold border transition-colors cursor-pointer ${
+                            specBrowserTheme === "dark"
+                              ? "bg-zinc-800 text-white border-zinc-900 font-extrabold"
+                              : "bg-[#f1efe9] text-black/40 border-transparent hover:text-black/75"
+                          }`}
+                        >
+                          Dark Browser
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Simulated Web Browser Tab Bar */}
+                    <div className={`border-2 border-black p-3 transition-colors duration-300 ${
+                      specBrowserTheme === "light" ? "bg-[#E6E6E6]" : "bg-[#202124]"
+                    }`} id="browser-simulation-frame">
+                      {/* Browser Window Controls Mock */}
+                      <div className="flex items-center gap-1.5 mb-2 border-b border-black/5 pb-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                        <span className={`text-[8px] font-mono ml-2 ${
+                          specBrowserTheme === "light" ? "text-neutral-500" : "text-neutral-400"
+                        }`}>Chromium v124.0.0</span>
+                      </div>
+
+                      {/* Browser Tabs Row */}
+                      <div className="flex items-end gap-1 overflow-x-auto select-none pt-1">
+                        
+                        {/* Active Simulated Tab (The App) */}
+                        <div className={`px-3 py-1.5 h-8 border-t border-x border-black flex items-center gap-2 max-w-[170px] truncate transition-colors duration-300 ${
+                          specBrowserTheme === "light" ? "bg-[#F3F3F3] text-[#333]" : "bg-[#35363A] text-[#EEE]"
+                        }`}>
+                          {/* Live Rendered Tab Icon at 16x16 */}
+                          <div className="w-4 h-4 shrink-0 overflow-hidden flex items-center justify-center border border-black/10 bg-black">
+                            <div 
+                              className="w-full h-full flex items-center justify-center"
+                              dangerouslySetInnerHTML={{ __html: getConceptSvgMarkup(selectedConcept) }} 
+                            />
+                          </div>
+                          <span className="text-[10px] font-sans font-medium truncate">
+                            Somatic Damage &amp; Constitutional Injury
+                          </span>
+                        </div>
+
+                        {/* Secondary Mock Tab */}
+                        <div className={`px-3 py-1.5 h-7 flex items-center gap-2 max-w-[130px] truncate opacity-50 text-[10px] border-b border-black ${
+                          specBrowserTheme === "light" ? "text-neutral-700" : "text-neutral-300"
+                        }`}>
+                          <div className="w-3.5 h-3.5 bg-black/15 text-white flex items-center justify-center text-[7px] font-bold">R</div>
+                          <span className="truncate font-sans font-normal">RYAN REAL AF</span>
+                        </div>
+
+                        {/* Plus Tab Add Button */}
+                        <div className={`w-6 h-6 flex items-center justify-center font-bold text-xs border-b border-black ${
+                          specBrowserTheme === "light" ? "text-neutral-600" : "text-[#EEE]"
+                        }`}>
+                          +
+                        </div>
+                      </div>
+
+                      {/* Mock Navigation Address Bar */}
+                      <div className={`mt-0 px-2 py-1 flex items-center gap-2 border-x border-b border-black ${
+                        specBrowserTheme === "light" ? "bg-[#F3F3F3]" : "bg-[#35363A]"
+                      }`}>
+                        <div className={`w-2.5 h-2.5 rounded-full ${specBrowserTheme === "light" ? "bg-black/10" : "bg-white/10"}`} />
+                        <div className={`flex-1 text-[9px] font-mono truncate px-2.5 py-0.5 ${
+                          specBrowserTheme === "light" ? "bg-white text-neutral-600" : "bg-[#202124] text-neutral-400"
+                        }`}>
+                          https://medico-legal-ledger.org/case-dossier/somatic-injury
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Verification / Feedback Message */}
+                    <div className="mt-5 bg-orange-600/10 border-l-4 border-orange-600 p-3 text-xs leading-relaxed text-black/85 font-serif text-left" id="specs-verification-notice">
+                      <span className="font-mono text-[9px] font-bold text-orange-600 uppercase tracking-widest block mb-1">
+                        ⚡ LIVE DESKTOP TEST SYNCHRONIZATION ACTIVE
+                      </span>
+                      Your selection has been hard-bound directly to your browser's real tab. Click different concepts on the right and check your <strong>actual browser tab favicon</strong> to see the high-contrast transition!
+                    </div>
+
+                  </div>
+
+                  {/* Aesthetic Code Specifications Panel */}
+                  <div className="bg-white border-2 border-black p-5 space-y-4 font-mono text-[11px] text-black">
+                    <div className="border-b border-black/10 pb-2 text-left">
+                      <h4 className="font-sans font-bold uppercase text-xs text-left">Color Scheme Core Specs</h4>
+                    </div>
+                    <div className="space-y-2 text-left">
+                      <div className="flex justify-between items-center border-b border-dashed border-black/5 pb-1">
+                        <span>#01 Broadside Cream (Canvas)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-[10px]">#F4F3EF</span>
+                          <span className="w-3.5 h-3.5 bg-[#F4F3EF] border border-black/20" />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-dashed border-black/5 pb-1">
+                        <span>#02 Safety Orange (Accent)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-[10px]">#FF4500</span>
+                          <span className="w-3.5 h-3.5 bg-[#FF4500] border border-black/20" />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-dashed border-black/5 pb-1">
+                        <span>#03 Pitch Black (Editorial)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-[10px]">#000000</span>
+                          <span className="w-3.5 h-3.5 bg-black border border-black/20" />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>#04 Soft Ivory (Paper)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-[10px]">#FCFBF9</span>
+                          <span className="w-3.5 h-3.5 bg-[#FCFBF9] border border-black/20" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-dashed border-black/15 text-[10px] text-neutral-500 leading-normal font-sans text-left">
+                      *Specimen fonts paired with <strong>Playfair Display</strong> for serif headings, <strong>Inter</strong> for paragraphs, and <strong>JetBrains Mono</strong> for technical labels.
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Right Column: Specimen Concept Selector List */}
+                <div className="lg:col-span-12 xl:col-span-7 space-y-4">
+                  
+                  {/* Title of Concepts Grid */}
+                  <div className="border-b-2 border-black pb-2 flex items-center justify-between">
+                    <h3 className="font-serif font-black text-black text-md uppercase tracking-tight">
+                      Co-Brand Alignment Concepts
+                    </h3>
+                    <span className="font-mono text-[9px] uppercase text-orange-600 font-bold bg-[#f1efe9] px-2 py-0.5 border border-black/10">
+                      7 Options Registered
+                    </span>
+                  </div>
+
+                  {/* List of 7 options */}
+                  <div className="space-y-4" id="visual-concepts-list">
+                    {[
+                      {
+                        num: 1,
+                        tag: "CONCEPT 01 / INTEGRATIVE BALANCE",
+                        title: "The Scale + Cardiac Pulse",
+                        desc: "Combines the medical-legal scale pillar where the right dynamic weigh-arm fluidly transitions into a red-orange cardiac pulse wave. Establishes the relationship between public accountability and biological survival.",
+                      },
+                      {
+                        num: 2,
+                        tag: "CONCEPT 02 / STATUTORY INVERT",
+                        title: "The Ledger Mark",
+                        desc: "A heavy pitch black square block containing a bold, traditional serif section symbol (§). Framed by a safety orange baseline highlight to represent legislative accountability and historical litigation records.",
+                      },
+                      {
+                        num: 3,
+                        tag: "CONCEPT 03 / BRUTALIST ALIGNMENT",
+                        title: "The Orange Vertical Bar",
+                        desc: "Features a strong physical safety orange column lining the left border of deep black grid boxes. Displays high-contrast monospace lettering 'DSA' on the right, mimicking newspaper sidebar markings.",
+                      },
+                      {
+                        num: 4,
+                        tag: "CONCEPT 04 / EXQUISITE MONOGRAM",
+                        title: "Double-Bar Monogram",
+                        desc: "An elegant, traditional monogram representing public ledger structures. Encapsulates letters 'M•R' within a geometric cream backdrop bordered by dual thick rules and a solid flat bottom highlights bar.",
+                      },
+                      {
+                        num: 5,
+                        tag: "CONCEPT 05 / BIOSOCIAL CASE",
+                        title: "The DNA Helix Pleading",
+                        desc: "Combines a biological double helix map with dual vertical red-orange lines evoking court pleading paper margins. Merges physical DNA destruction context directly with litigation frameworks.",
+                      },
+                      {
+                        num: 6,
+                        tag: "CONCEPT 06 / CHRONOLOGICAL PROCESS",
+                        title: "The Chevron Ledger",
+                        desc: "Two heavy chevrons stacked together. Employs safety orange on top and pristine white on the bottom over a pitch-black foundation. Signifies continuous narrative tracking and analytical sequence restoration.",
+                      },
+                      {
+                        num: 7,
+                        tag: "CONCEPT 07 / STANDARD PACKED",
+                        title: "The Stacked Blockmark",
+                        desc: "Meticulously crafted vector blockmark containing the standard co-branded 'RYAN REAL AF' wordline stacked underneath serif modern letters. Framed by physical boundaries and bold orange accents.",
+                      },
+                    ].map((concept) => {
+                      const isSelected = selectedConcept === concept.num;
+                      return (
+                        <div
+                          key={concept.num}
+                          onClick={() => setSelectedConcept(concept.num)}
+                          className={`bg-[#FCFBF9] border-2 border-black p-5 sm:p-6 transition-all duration-150 cursor-pointer relative group ${
+                            isSelected 
+                              ? "scale-[1.01] border-orange-600 shadow-[6px_6px_0px_#ea580c]" 
+                              : "hover:border-black shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[6px_6px_0px_#FF4500] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                          }`}
+                          id={`concept-selector-${concept.num}`}
+                        >
+                          {/* Active badge */}
+                          <span className={`absolute top-4 right-4 font-mono text-[9px] uppercase font-bold px-2 py-0.5 border ${
+                            isSelected
+                              ? "bg-orange-600 text-white border-orange-600"
+                              : "text-neutral-400 border-neutral-200 group-hover:text-orange-600 group-hover:border-orange-600 transition-colors"
+                          }`}>
+                            {isSelected ? "ACTIVE SELECTION" : "[ CLICK TO SIMULATE ]"}
+                          </span>
+
+                          <div className="flex flex-col sm:flex-row gap-5 items-stretch">
+                            
+                            {/* Concept Visual Thumbnail Display */}
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black border-2 border-black shrink-0 flex items-center justify-center p-1 font-mono hover:rotate-1 transition-transform">
+                              <div
+                                className="w-full h-full flex items-center justify-center overflow-hidden bg-black"
+                                dangerouslySetInnerHTML={{ __html: getConceptSvgMarkup(concept.num) }}
+                              />
+                            </div>
+
+                            {/* Text Content */}
+                            <div className="space-y-1 pr-12 text-left">
+                              <span className={`font-mono text-[9px] font-bold tracking-wider ${
+                                isSelected ? "text-orange-600" : "text-neutral-500"
+                              }`}>
+                                {concept.tag}
+                              </span>
+                              <h4 className="font-serif font-bold text-lg sm:text-xl text-[#1a1a1a] tracking-tight">
+                                {concept.title}
+                              </h4>
+                              <p className="text-xs text-neutral-600 leading-relaxed font-sans pt-1">
+                                {concept.desc}
+                              </p>
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                </div>
               </div>
             </motion.div>
           )}
