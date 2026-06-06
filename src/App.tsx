@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { paperTitle, paperMetadata, paperSections, documentFullText, papers } from "./data/document";
+import { sectionDeepDives } from "./data/deepDives";
 
 // Real-world authoritative citations and legal reference link maps
 export const LINKS = {
@@ -132,6 +133,7 @@ export default function App() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "neuro": true,
   });
+  const [expandedDeepDives, setExpandedDeepDives] = useState<Record<string, boolean>>({});
 
   // Chat/AMA states
   const [chatMessage, setChatMessage] = useState("");
@@ -156,6 +158,10 @@ export default function App() {
     setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const toggleDeepDive = (id: string) => {
+    setExpandedDeepDives(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const expandAllSections = () => {
     const all = {} as Record<string, boolean>;
     selectedPaper.sections.forEach(s => {
@@ -166,6 +172,7 @@ export default function App() {
 
   const collapseAllSections = () => {
     setExpandedSections({});
+    setExpandedDeepDives({});
   };
 
   const handleSendMessage = async (msgToSend?: string) => {
@@ -725,6 +732,64 @@ export default function App() {
                                       </div>
                                     ))}
                                   </div>
+
+                                  {/* Expandable Medico-Legal Deep-Dive Proof Block */}
+                                  {sectionDeepDives[section.id] && (
+                                    <div className="border border-[#1a1a1a]/15 bg-[#f1efe9]/10 p-4 space-y-3 shadow-none">
+                                      <button
+                                        onClick={() => toggleDeepDive(section.id)}
+                                        className="w-full flex items-center justify-between py-1 text-[11px] font-mono font-bold uppercase tracking-wider text-orange-600 hover:text-orange-700 transition-colors border-b border-[#1a1a1a]/10 select-none cursor-pointer"
+                                      >
+                                        <span className="flex items-center gap-2">
+                                          <Cpu className="w-4 h-4 text-orange-600 animate-pulse" />
+                                          <span>{expandedDeepDives[section.id] ? "[-] CONCEAL SPECIFIC LEGAL & CLINICAL EVIDENCE" : "[+] EXPOSE METICULOUS DEEP-DIVE EVIDENCE & PROTOCOLS"}</span>
+                                        </span>
+                                        <span className="text-[9px] bg-orange-600/10 px-2 py-0.5 text-orange-600 rounded-none">
+                                          {expandedDeepDives[section.id] ? "COLLAPSE" : "EXPAND CONTEXT"}
+                                        </span>
+                                      </button>
+                                      
+                                      <AnimatePresence initial={false}>
+                                        {expandedDeepDives[section.id] && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.18 }}
+                                            className="space-y-4 pt-2 pb-1 overflow-hidden"
+                                          >
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                              <div className="p-3 bg-[#f1efe9]/40 border-l-2 border-orange-600 space-y-1.5 matches-citation font-serif text-xs">
+                                                <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-orange-600 block">PHYSIOLOGICAL MECHANICS & MARKERS</span>
+                                                <p className="text-black/85 leading-relaxed font-sans text-xs">{parseCitations(sectionDeepDives[section.id].scientificDetail)}</p>
+                                              </div>
+                                              
+                                              <div className="p-3 bg-white border border-[#1a1a1a]/10 space-y-1.5 matches-citation font-serif text-xs">
+                                                <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-black/60 block">JUDICIAL STANDARDS & LITIGATION BRIEF</span>
+                                                <p className="text-black/85 leading-relaxed font-sans text-xs">{parseCitations(sectionDeepDives[section.id].legalDetail)}</p>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="p-3 bg-[#e2e2da]/25 border border-dashed border-[#1a1a1a]/20 space-y-2">
+                                              <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-[#1a1a1a] block">FORENSIC CASE TIMELINE & PROOF CHECKLIST</span>
+                                              <ul className="text-[10px] text-black/75 space-y-1 list-disc pl-4 font-mono leading-relaxed">
+                                                {sectionDeepDives[section.id].checklist.map((item, idx) => (
+                                                  <li key={idx} className="list-item">
+                                                    {item}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                            
+                                            <div className="text-[9px] font-mono text-black/45 pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-t border-[#1a1a1a]/5 leading-snug">
+                                              <span className="font-bold">SCHOLARLY EVIDENCE ACCREDITATION:</span>
+                                              <span className="italic sm:text-right">{parseCitations(sectionDeepDives[section.id].citationDetail)}</span>
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                    </div>
+                                  )}
 
                                   {/* Citation List Footer */}
                                   <div className="flex flex-wrap gap-2 items-center justify-between text-[10px] font-mono text-black/55 pt-3 border-t border-[#1a1a1a]/10 bg-[#e2e2da]/20 p-2">
