@@ -1,0 +1,6 @@
+{
+  "name": "Medico-Legal DSA Analyzer",
+  "description": "An interactive, digestable public representation of the Physiological & Constitutional harm of Coordinated Directed Social Aggression.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
