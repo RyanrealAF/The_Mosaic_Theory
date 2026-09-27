@@ -191,7 +191,7 @@ export default function App() {
     setIsTyping(true);
 
     try {
-      const apiBase = window.location.pathname.startsWith("/mosaic-theory") ? "/mosaic-theory" : "";
+      const apiBase = window.location.pathname.startsWith("/mosaic-theory") ? "/mosaic-theory" : window.location.pathname.startsWith("/mosaic") ? "/mosaic" : "";
       const response = await fetch(`${apiBase}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -313,7 +313,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f9f8f4] text-[#1a1a1a] font-sans flex flex-col antialiased selection:bg-orange-600/25 selection:text-[#1a1a1a] sm:border-[12px] md:border-[16px] border-[#e2e2da] transition-all" id="main-container">
       
       {/* Top Academic Header / Editorial Masthead */}
-      <header className="border-b border-[#1a1a1a]/15 bg-[#f9f8f4] sticky top-0 z-40" id="primary-header">
+      <header className="border-b border-[#1a1a1a]/15 bg-[#f9f8f4] sticky top-0 z-40" id="primary-header"><div className="px-4 sm:px-8 py-2 text-[10px] font-mono uppercase tracking-widest"><a href="https://buildwhilebleeding.com/" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">← Build While Bleeding</a></div>
         {/* Superior classification fine print */}
         <div className="w-full bg-[#e2e2da]/45 py-2 px-4 sm:px-8 border-b border-[#1a1a1a]/10 flex flex-col sm:flex-row justify-between items-center text-[9px] uppercase tracking-[0.25em] font-semibold text-black/50 font-mono text-center gap-1">
           <span>Medico-Legal Public Ledger</span>
